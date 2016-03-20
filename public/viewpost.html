@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>bitlab</title>
+  <meta name="description" content="Education &amp; technology to unlock potential. Business process automation. Art creation for screen and print.">
+  <meta name="author" content="Rouan van der Ende">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="/css/normalize.css">
+  <link rel="stylesheet" href="/css/skeleton.css">
+  <link rel="stylesheet" href="/css/bitlab.css">
+  <link rel="stylesheet" href="/css/bitlab_white.css">
+
+  <!-- Javascript
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<script src="/js/jquery.min.js"></script>
+	
+	<link rel="stylesheet" href="/js/styles/default.css">
+	<script src="/js/highlight.pack.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>	
+
+	<script src="/js/marked.min.js"></script>
+
+	<script src="/js/index.js"></script>
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+
+
+<script type="text/javascript">
+
+function renderPost(post) {
+	console.log(post)
+
+	$("#postTitle").html(post.title)
+	var html_content = marked( post.markdown );
+	$("#postContent").html(html_content)
+}
+
+function loadPost() {
+
+
+
+
+	$.ajax({
+	    url: '/api/findone', 
+	    type: 'GET', 
+	    contentType: 'application/json', 
+	    data: JSON.stringify({})}
+	).done( function( data ) {
+		console.log('recieved post');
+		
+		renderPost(data);
+	});
+}
+
+	$(document).ready( function() {
+
+		marked.setOptions({
+		  highlight: function (code) {
+		    return hljs.highlightAuto(code).value;
+		  }
+		});
+		
+		console.log("loaded.")
+		loadPost();
+	});
+
+</script>
+
+</head>
+
+	<body class="postBody" >
+	
+<div id="topbanner" style="width:100%;">
+	<div id="topbannerContent"  style="z-index:5;width:100%;">
+	  <div class="container page" >
+
+	    	<div class="row" style="color: #fff; padding-top: 40px;" >
+	      
+				<a href="/"><h1 class="logodark orbitron dark" style="float:left;" >bitlab</h1></a>
+				<a class="menu varela menupost"  href="/contact" style="text-align:right;padding-top: 0px; font-size: 14px; float:right;">Contact</a>
+				
+			</div>			
+
+
+			<div class="row" style="margin-top:80px;" >
+				<div id="sloganHolder" style="display: inline-block;">
+					<div id="postTitle" class="varela" id="sloganBanner" style="color: #fff;background:rgb(30,30,30); letter-spacing: 0.025em; font-size: 17px; line-height: 2em; padding: 4px 12px 4px 12px; display: inline-block;" >
+						loading...
+					</div>
+				</div>
+			</div>
+
+
+		  	<div class="row" style="margin-bottom: 40px;" >
+				<div id="postContent" class="varela gray postContent" style="" >
+					loading...
+				</div>				
+			</div>	
+
+		</div>
+	</div>
+
+</div>
+  
+	
+
+<div style="margin-top: 20px;">
+	<div class="container gray" >
+		<div id="posts" class="row" style="padding-top:60px; margin-bottom: 40px;" >
+		</div>
+	</div>	
+</div>
+
+
+
+
+
+</body>
+
+
+</html>
