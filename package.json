@@ -23,6 +23,12 @@
     "api"
   ],
   "dependencies": {
+    "body-parser": "^1.15.0",
+    "cookie-parser": "^1.4.1",
+    "cookie-session": "^2.0.0-alpha.1",
+    "express": "^4.13.4",
+    "mongojs": "^2.3.0",
+    "multer": "^1.1.0"
   },
   "engines": {
     "node": ">= 0.10.0"
