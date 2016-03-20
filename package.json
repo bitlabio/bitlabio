@@ -1,0 +1,37 @@
+{
+  "name": "bitlabio",
+  "description": "Next-gen web system",
+  "version": "0.0.1",
+  "author": {
+    "name": "Rouan van der Ende",
+    "email": "rouan@8bo.org"
+  },
+  "contributors": [
+    {
+      "name": "Rouan van der Ende",
+      "email": "rouan@8bo.org"
+    }
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bitlabio/bitlabio"
+  },
+  "keywords": [
+    "system",
+    "app",
+    "api"
+  ],
+  "dependencies": {
+  },
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "homepage": "http://bitlab.io",
+  "maintainers": [
+    {
+      "name": "rouanvdende",
+      "email": "rouan@8bo.org"
+    }
+  ]
+}
