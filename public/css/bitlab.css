@@ -78,13 +78,15 @@ a:hover { text-decoration: none; color: #3dd7ab;}
 
 .dark { color: rgb(0,0,0); }
 .white { color: #fff; }
-.gray { color: rgb(127,127,127);}
+.gray { color: rgb(170,170,170);}
+
 .caps { text-transform: uppercase;}
-.pad { padding: 20px;}
+.pad { padding: 20px 12px 25px 12px;}
 .title { font-size: 18px;}
 .logo { font-weight: 700; font-size: 27px; letter-spacing: 0.01em;}
 .logo a { text-decoration: none; color: #fff;}
 
+.graybg { background: rgb(40,40,40) }
 .darkbg { background:rgb(30,30,30);  }
 
 .logodark { font-weight: 700; font-size: 27px; letter-spacing: 0.01em;}

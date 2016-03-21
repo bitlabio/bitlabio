@@ -150,13 +150,17 @@ function game(pr) {
 						//var light = 50+ lines[l].closeness%16*5
 						var light = lines[l].closeness*5
 						pr.stroke(100,100,100,light)
+
+						if (light > 150) { pr.stroke(61,215,171,light) }
+
 						pr.line(lines[l].p1.x, lines[l].p1.y, lines[l].p2.x, lines[l].p2.y)
 						var s = lines[l].closeness/3
 						if (s > 5) { s = 5}
 
-						//pr.noStroke()
-						//pr.fill(50,50,50,light)
-						//pr.ellipse(lines[l].p1.x, lines[l].p1.y,s,s)
+
+						pr.noStroke()
+						pr.fill(61,215,171,light)
+						pr.ellipse(lines[l].p1.x, lines[l].p1.y,s,s)
 						
 					}
 			
