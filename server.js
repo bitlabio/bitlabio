@@ -178,7 +178,10 @@ app.get('/api/checklogin', (req, res) => {
   }
 })
 
-app.get('/api/search', (req, res) => { db.posts.find( (err, result) => {  res.json(result) }) })
+app.get('/api/search', (req, res) => { db.posts.find({}, (err, result) => {  res.json(result) }) })
+app.get('/api/tags', (req, res) => { db.tags.find({}, (err, result) => {  res.json(result) }) })
+app.get('/api/posts_tags', (req, res) => { db.posts_tags.find({}, (err, result) => {  res.json(result) }) })
+//app.get('/api/search', (req, res) => { db.posts.find( (err, result) => {  res.json(result) }) })
 
 app.get('/api/findone', (req, res) => {
   var url = req.get('Referrer')

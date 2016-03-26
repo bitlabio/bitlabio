@@ -41,17 +41,12 @@
 
 function renderPost(post) {
 	console.log(post)
-
 	$("#postTitle").html(post.title)
 	var html_content = marked( post.markdown );
 	$("#postContent").html(html_content)
 }
 
 function loadPost() {
-
-
-
-
 	$.ajax({
 	    url: '/api/findone', 
 	    type: 'GET', 
@@ -59,7 +54,6 @@ function loadPost() {
 	    data: JSON.stringify({})}
 	).done( function( data ) {
 		console.log('recieved post');
-		
 		renderPost(data);
 	});
 }
