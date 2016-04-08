@@ -2,7 +2,7 @@
 
 var workers = []
 
-var socket = io('http://localhost:3001');
+var socket = io('http://bitlab.io:3001');
 
 socket.emit('bitblenderwebconnect', {});
 
