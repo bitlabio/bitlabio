@@ -69,6 +69,78 @@ app.use(session({
   secureProxy: false // if you do SSL outside of node
 }))
 
+/* bitBLENDER */
+
+var workers = []
+var webclients = []
+var io = require('socket.io')(3001);
+
+io.on('connection', function (socket) {
+
+  socket.on('bitblenderworkerconnect', function (worker) {
+    worker.socketid = socket.id
+    worker.workername = encodeURIComponent(worker.workername)
+    worker.timestamp = Date.now()
+    workers.push(worker);
+    //console.log(worker)
+    //socket.broadcast.emit('bitblenderworkerconnect', worker);
+    socket.broadcast.emit('workers', workers);
+    console.log("sent workers list")
+  })
+
+  socket.on('bitblenderwebconnect', function (web) {
+    web.socketid = socket.id
+    webclients.push(web)
+    socket.emit('workers', workers)
+    console.log("sent workers list")
+  })
+
+  socket.on('message', function (data) {
+    console.log(data);
+    socket.broadcast.emit('message', data);
+  });
+
+
+  socket.on('disconnect', function () { 
+    console.log("node disconnected")
+    console.log(socket.id)
+    workersDisconnect(socket.id);
+    webclientsDisconnect(socket.id);
+    socket.broadcast.emit('workers', workers);
+    console.log("sent workers list")
+  });
+
+});
+
+function webclientsDisconnect(socketid) {
+  //removes a webclient from the webclients array based on socket.id
+  var wid = -1;
+  for (var w in webclients) { if (webclients[w].socketid == socketid ) {
+        wid = w;
+      }
+  }
+  if (wid >= 0) { webclients.splice(wid,1) }
+}
+
+function workersDisconnect(socketid) {
+  //removes a worker from the workers array based on socket.id
+  var wid = -1;
+  for (var w in workers) { if (workers[w].socketid == socketid ) {
+        wid = w;
+      }
+  }
+  if (wid >= 0) { workers.splice(wid,1) }
+}
+
+
+
+
+app.get('/bitblender', (req, res) => {
+  res.sendFile(path.join(__dirname+'/public/bitblender.html'));  
+})
+
+
+
 
 app.get('/test', (req, res) => {
   console.log("visitor on test!")
