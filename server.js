@@ -40,6 +40,10 @@ var fs          = require('fs');
 var multer      = require('multer')
 var upload      = multer({ dest: 'uploads/' })
 var mongojs     = require('mongojs')
+var mkdirp      = require('mkdirp');
+
+var _ = require('underscore')
+
 var db          = mongojs('bitlab2',[
                   "posts",
                   "users",
@@ -69,12 +73,19 @@ app.use(session({
   secureProxy: false // if you do SSL outside of node
 }))
 
-/* bitBLENDER */
+/* 
+================================================================================
+bitBLENDER */
+
+var blender  = require("pusher.blender")
+
+console.log(blender)
 
 var workers = []
 var webclients = []
+var jobs = []
 var io = require('socket.io')(3001);
-
+var globalsocket
 io.on('connection', function (socket) {
 
   socket.on('bitblenderworkerconnect', function (worker) {
@@ -107,6 +118,7 @@ io.on('connection', function (socket) {
     workersDisconnect(socket.id);
     webclientsDisconnect(socket.id);
     socket.broadcast.emit('workers', workers);
+    globalsocket = socket.broadcast;
     console.log("sent workers list")
   });
 
@@ -132,8 +144,71 @@ function workersDisconnect(socketid) {
   if (wid >= 0) { workers.splice(wid,1) }
 }
 
+function parseBlend(filename)
+{
+    console.log("Opening file: ", filename);
+    var file = blender.open(filename);
+
+    console.log("File version: ", file.header.version);
+    
+    console.log("Reading meshes...");
+    var meshes = file.getBlocks("Mesh");
+    _.each(meshes, function (block) 
+    {
+        var obj = file.readObject(block.address);
+        
+        console.log("Mesh at 0x" + block.address, 
+            "total vertices/faces/edges:",
+            obj.totvert + "/" + obj.totface + "/" + obj.totedge);
+
+        console.log("Object:");
+        console.log(obj);
+    });    
+}
+
+//parseBlend("data/unitCube-000.blend");
 
 
+var jobs = []
+var jobnum = 0
+
+app.put('/bitblender/upload/:file', (req, res) => {
+  jobnum++;
+  var thisjobnum = jobnum;
+
+  var path = 'public/bitblender/'
+  var folder = 'jobs/'+thisjobnum;
+
+  mkdirp(path+folder, function (err) {
+      if (err) console.error(err)
+      else {
+        console.log('pow!')
+
+        var diskfile = fs.createWriteStream(path+folder+'/'+req.params.file)
+        console.log("file upload!"+req.url)
+        console.log(req.params)
+        req.on('data', function (data) {
+          //console.log(data.toString())
+          diskfile.write(data)
+        })
+        req.on('end', function (data) {
+          console.log("---- new job -----")
+          console.log("done recieving file:" + req.params.file)
+          
+          var job = {}
+          job.file = folder+'/'+req.params.file
+          jobs.push(job)
+          globalsocket.emit('jobs', jobs);
+
+          res.end(folder+'/'+req.params.file);
+        })
+
+      }
+  });
+
+
+
+})
 
 app.get('/bitblender', (req, res) => {
   res.sendFile(path.join(__dirname+'/public/bitblender.html'));  

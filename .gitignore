@@ -1,4 +1,5 @@
 config.json
+*.app
 
 # Logs
 logs
@@ -27,6 +28,7 @@ build/Release
 
 # Dependency directory
 node_modules
+public/bitblender/jobs
 
 # Optional npm cache directory
 .npm
