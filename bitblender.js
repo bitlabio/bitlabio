@@ -41,11 +41,17 @@ Set your bitcoin recieve address below. This is where your earnings will be paid
 If you set this wrong you wont get paid!!                     
  													*/
 
+// identifier
+bitblender.workername = "rouanTestNode"; 
 
-bitblender.workername = "rouanTestNode" 						          // identifier
-bitblender.bitcoin = "1B4Ve9dh4qfG1SqYSXiTtceJ95iv5Y3d3s"		  // your wallet where you want to recieve payment
-bitblender.rate = 0.00001  										                // how many btc per frame you charge
-bitblender.autowithdraw = 0.005  								              // tells server to send when you've acquired atleast this amount (to minimize loss on fees)
+// your wallet where you want to recieve payment
+bitblender.bitcoin = "1B4Ve9dh4qfG1SqYSXiTtceJ95iv5Y3d3s"; 
+
+// how many btc per frame you charge
+bitblender.rate = 0.00001; 
+
+// tells server to send when you've acquired atleast this amount (to minimize loss on fees)
+bitblender.autowithdraw = 0.005; 
 
 /* 
  note: In future we will probably adjust the way rate works to be more fair in terms of processing time etc.
