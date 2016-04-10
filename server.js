@@ -1,4 +1,6 @@
-  
+var bitlab = {}
+bitlab.version = 2
+
   /* 
     
       BITLAB.io   
@@ -47,6 +49,7 @@ var _ = require('underscore')
 var db          = mongojs('bitlab2',[
                   "posts",
                   "users",
+                  "wallets",
                   "roles",
                   "roles_users",
                   "permissions",
@@ -73,19 +76,131 @@ app.use(session({
   secureProxy: false // if you do SSL outside of node
 }))
 
+app.use('/', express.static('public')); //index.html default
+
+var logger = function (req, res, next) {
+  //console.log("req:"+req.url)
+  next();
+};
+
+
+app.use(logger);
+
+
+
+
+var users = function (req, res, next) {
+  if (req.session.hash) {
+    db.users.findOne({"sessionhash":req.session.hash}, function(err,dbuser) {
+      if (dbuser == null) {
+        //USER NOT RECOGNIZED (YET?) 
+        console.log("invalid sessionhash!!");   
+        delete req.session.hash
+        next();
+      } else {
+        //USER RECOGNIZED
+        delete req.session.new  //delete new flag (bug workaround)
+        req.user = dbuser       //loads user data onto req
+        console.log("ALIAS "+dbuser.alias+" REQUEST "+req.method+" "+req.url)
+        next();
+      }
+    })
+  } else {
+    next();
+  }
+
+  
+/*
+  if (req.session.hash == null) {
+
+    //AUTO REGISTRATION
+
+    //if they dont have a session hash cookie yet then we create one for them.
+    //now we can remember this user even if they dont register
+    req.session.new   = true
+
+    var user = {}
+    user.sessionhash  = genRandomHex(64);
+    req.session.hash  = user.sessionhash;
+
+    user.alias        = "anon"+Math.round(Math.random()*999999);
+    user.created      = Date.now()
+    user.uniquehash   = genRandomHex(64); //THIS SHOULD NEVER CHANGE IN FUTURE
+    user.lastseen     = user.created;
+
+    makeWallet(user.uniquehash, (newwalletaddress) => {
+      //THIS SHOULD NEVER CHANGE IN FUTURE. Private keys are stored in wallet database.
+      user.walletaddress = newwalletaddress
+
+      db.users.save(user, function (err,result) {
+        console.log("new user.")
+        delete req.session.new;
+        next();
+      })  
+
+    }); 
+    
+    
+
+  } */
+  
+}
+
+app.use(users);
+
+var newusers = function(req, res, next) {
+  if (req.session.hash == undefined) {
+    console.log("new user registration!")  
+    //AUTO REGISTRATION
+
+    var user = {}
+    user.sessionhash  = genRandomHex(64);
+    req.session.hash  = user.sessionhash;
+
+    user.alias        = "anon"+Math.round(Math.random()*999999);
+    user.created      = Date.now()
+    user.uniquehash   = genRandomHex(64); //THIS SHOULD NEVER CHANGE IN FUTURE
+    user.lastseen     = user.created;
+
+    makeWallet(user.uniquehash, (newwalletaddress) => {
+      //THIS SHOULD NEVER CHANGE IN FUTURE. Private keys are stored in wallet database.
+      user.walletaddress = newwalletaddress
+
+      db.users.save(user, function (err,result) {
+        console.log("new user.")
+        next();
+      })  
+
+    }); 
+
+  } 
+}
+
+
+
+var genRandomHex = function (len) {
+  var randomhex = ""
+  while (randomhex.length < len) {
+    var randomnum    = Math.round(Math.random()*9999999999999) 
+    var randomnumhex = randomnum.toString(16)
+    var a = Math.floor(Math.random()*randomnumhex.length)
+    var b = Math.floor((randomnumhex.length - a)*Math.random())
+    randomhex += randomnumhex.slice(a,b)
+  }
+  var finaltrim = randomhex.slice(0,len);
+  return finaltrim
+}
+
 /* 
 ================================================================================
 bitBLENDER */
 
 var blender  = require("pusher.blender")
-
-console.log(blender)
-
 var workers = []
 var webclients = []
 var jobs = []
 var io = require('socket.io')(3001);
-var globalsocket
+var globalsocket = false;
 io.on('connection', function (socket) {
 
   socket.on('bitblenderworkerconnect', function (worker) {
@@ -174,7 +289,7 @@ var jobnum = 0
 
 app.put('/bitblender/upload/:file', (req, res) => {
   jobnum++;
-  var thisjobnum = jobnum;
+  var thisjobnum = Math.round(Math.random()*999999);
 
   var path = 'public/bitblender/'
   var folder = 'jobs/'+thisjobnum;
@@ -196,11 +311,13 @@ app.put('/bitblender/upload/:file', (req, res) => {
           console.log("done recieving file:" + req.params.file)
           
           var job = {}
-          job.file = folder+'/'+req.params.file
+          job.jobnum = thisjobnum
+          job.file = req.params.file
+          job.filepath = folder+'/'+req.params.file
           jobs.push(job)
-          globalsocket.emit('jobs', jobs);
+          if (globalsocket != false) { globalsocket.emit('jobs', jobs); }
 
-          res.end(folder+'/'+req.params.file);
+          res.end(job.filepath);
         })
 
       }
@@ -211,11 +328,36 @@ app.put('/bitblender/upload/:file', (req, res) => {
 })
 
 app.get('/bitblender', (req, res) => {
-  res.sendFile(path.join(__dirname+'/public/bitblender.html'));  
+  res.sendFile(path.join(__dirname+'/view/bitblender.html'));  
 })
 
+/* == BITCOIN STUFF ======================================================================== */
 
+var makeWallet = function (ownerUniqueHash, cb) {
+  var bitcoin = require("bitcoinjs-lib")
+  var keyPair = bitcoin.ECPair.makeRandom()
+  var wallet = {}
+  wallet.privatekey = keyPair.toWIF();
+  wallet.address = keyPair.getAddress()
+  wallet.ownerUniqueHash = ownerUniqueHash;
 
+  db.wallets.save(wallet, (err,result) => {
+    if (err) { console.log("error!") } else {
+
+      cb(wallet.address); //just return the public save part
+    }
+  })
+
+  
+}
+
+/* ========================================================================== */
+
+app.get('/account', (req, res) => {
+  res.sendFile(path.join(__dirname+'/view/account.html'));  
+})
+
+/* ========================================================================== */
 
 app.get('/test', (req, res) => {
   console.log("visitor on test!")
@@ -224,7 +366,7 @@ app.get('/test', (req, res) => {
 })
 
 app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname+'/public/contact.html'));  
+  res.sendFile(path.join(__dirname+'/view/contact.html'));  
 })
 
 
@@ -233,29 +375,26 @@ app.get('/contact', (req, res) => {
 
 app.get('/view/:pid', (req, res) => {
   console.log(req.params)
-  res.sendFile(path.join(__dirname+'/public/viewprop.html'));
+  res.sendFile(path.join(__dirname+'/view/viewprop.html'));
 })
 
 
 app.get('/', (req,res) => {
   if (req.session.hash) {
-    console.log("LOGGED IN")
-    console.log(req.session.hash);
-    res.sendFile(path.join(__dirname+'/public/index.html'));
+    res.sendFile(path.join(__dirname+'/view/index.html'));
   } else {
-    console.log("anon")
-    res.sendFile(path.join(__dirname+'/public/index.html'));
+    res.sendFile(path.join(__dirname+'/view/index.html'));
   }
   
 })
 
 
-app.use('/', express.static('public')); //index.html default
+
 
 
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname+'/public/login.html'));  
+  res.sendFile(path.join(__dirname+'/view/login.html'));  
 })
 
 app.get('/logout', (req, res) => {
@@ -265,7 +404,7 @@ app.get('/logout', (req, res) => {
 
 app.get('/submit', (req, res) => {
   if (req.session.hash == lastlogin) {
-    res.sendFile(path.join(__dirname+'/public/submit.html'));  
+    res.sendFile(path.join(__dirname+'/view/submit.html'));  
   } else {
     res.redirect("/login")
   }  
@@ -279,6 +418,31 @@ var scrypt = require("./js/scrypt.js"); // modified https://github.com/tonyg/js-
 
 var lasthash = ""; //last generated (could be malicious)
 var lastlogin = ""; //last successful (retain!)
+
+app.get('/api/user', (req,res) => {
+  res.json(req.user)
+});
+
+app.put('/api/user', (req,res) => {
+  console.log("user change")
+  console.log(req.body)
+
+  db.users.findOne({"sessionhash": req.user.sessionhash}, (err,dbuser) => {
+    console.log(dbuser)
+    if (req.body.alias) { if ((req.body.alias.length > 3 )&&(req.body.alias.length <15 )) {
+      //TODO security on funny aliases.
+      dbuser.alias = req.body.alias;
+      db.users.update({"sessionhash": req.user.sessionhash}, dbuser, (err,dbupdateresult) => {
+        console.log(dbupdateresult)
+      })
+    }}
+  })
+  
+
+  res.json(req.user)
+});
+
+
 
 app.get('/api/delete', (req,res) => {
   if (req.session.hash == lastlogin) {
@@ -379,7 +543,7 @@ app.use('/newgame' ,(req, res) => {
   gameData[newGame.id] = newGame;
 
   res.redirect('/game/'+newGame.id+"/");
-  //res.sendFile(path.join(__dirname+'/public/newgame.html'));
+  //res.sendFile(path.join(__dirname+'/view/newgame.html'));
 })
 
 app.use('/game/:id/:options' ,(req, res) => {
@@ -394,14 +558,39 @@ app.use('/game/:id/:options' ,(req, res) => {
 
 app.use('/p/:id/' ,(req, res) => {
   console.log(req.params.id);
-  res.sendFile(path.join(__dirname+'/public/viewprop.html'));  
+  res.sendFile(path.join(__dirname+'/view/viewprop.html'));  
 })
 
 app.get('/:slug', function (req,res,next) {
   var slug = req.params.slug;
   console.log(req.params)
   db.posts.findOne({"slug":slug}, function (err, post) {
-    res.sendFile(path.join(__dirname+'/public/viewpost.html'));
+    if (post == null) {
+
+      res.status(404);
+      
+
+      // respond with html page
+        if (req.accepts('html')) {
+          res.sendFile(path.join(__dirname+'/view/404.html'));
+          return;
+        }
+
+        // respond with json
+        if (req.accepts('json')) {
+          res.send({ error: 'Not found' });
+          return;
+        }
+
+        // default to plain-text. send()
+        res.type('txt').send('Not found');
+
+
+
+    } else {
+      res.sendFile(path.join(__dirname+'/view/viewpost.html'));  
+    }
+    
   })
 })
 

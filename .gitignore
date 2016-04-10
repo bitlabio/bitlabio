@@ -1,6 +1,6 @@
 config.json
 *.app
-
+jobs
 # Logs
 logs
 *.log

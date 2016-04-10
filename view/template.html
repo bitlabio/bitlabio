@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>bitlab</title>
+  <meta name="description" content="Education &amp; technology to unlock potential. Business process automation. Art creation for screen and print.">
+  <meta name="author" content="Rouan van der Ende">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="/css/normalize.css">
+  <link rel="stylesheet" href="/css/skeleton.css">
+  <link rel="stylesheet" href="/css/bitlab.css">
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+
+
+
+  <!-- Javascript
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<script src="/js/jquery.min.js"></script>
+	
+	<script src="/js/socket.io.js"></script>
+	
+
+	<link rel="stylesheet" href="/js/styles/default.css">
+	<script src="/js/highlight.pack.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>	
+	<script src="/js/marked.min.js"></script>
+
+	<script src="/js/moment.min.js"></script>
+	
+	<script src="/js/bitblender_web.js"></script>
+	
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
+  <link rel="image_src" href="http://bitlab.io/images/profile.jpg" />
+  <meta property="og:image" content="http://bitlab.io/images/profile.jpg" />
+
+
+<script type="text/javascript">
+	
+$(document).ready( function () {
+ $("#findOutButton").hover( function() {
+ 	$(this).css("color", "#fff")
+ 	$(this).css("background", "#5fe8ce")
+ }, function() {
+ 	$(this).css("color", "#000")
+ 	$(this).css("background", "#3dd7ab")
+ })
+
+
+$(".serviceBlock").css("border-top", "2px solid #3dd7ab")
+$(".serviceBlock").css("background-color", "#000000")
+
+
+$("#closeButtonInfo").click( function() {
+	$("#popupInfo").hide()
+})
+
+})
+</script>
+
+<style>
+#findOutButton {
+	transition: color 0.1s linear;
+	transition: background 0.15s linear;
+}
+
+.serviceBlock {
+	border-top: 2px solid #1e1e1e;
+	background-color: #1e1e1e;
+	transition: background-color 2s linear;
+	transition: border-top 2s linear;
+	
+}
+
+.spot { color: #3dd7ab; }
+.topborder {border-top: 1px dashed #444;}
+.bottomborder {border-bottom: 1px dashed #444;}
+
+hr { 
+	border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(50, 50, 50, 0.75), rgba(0, 0, 0, 0));
+}
+
+#closeButtonInfo { color: rgb(100,100,100); cursor: pointer; }
+#closeButtonInfo:hover { color: rgb(255,100,100); }
+
+</style>
+
+</head>
+
+<body class="varela">
+
+
+	
+<div id="topbanner" style="width:100%; max-width: 100%;">
+	<div id="topbannerContent" >
+	  <div class="container" >
+	    
+	    	<div class="row" style="color: #fff; padding-top: 40px; padding-left: 12px;" >
+	      
+					
+					<div class="orbitron" style="color:rgb(255,255,255); letter-spacing: 0.025em; font-size: 22px; position:relative; top: -5px;" >
+						bit<span class="varela" style="font-size: 18px;position: relative; left: -1px;letter-spacing: -0.05em;  ">BLENDER</span> <span class="varela" style="font-size: 8px;  color: #3dd7ab; top: -17px; padding: 0px; text-transform: lowercase; margin: 0; position: relative; left: -32px; letter-spacing: -0.05em;">stealth beta v0.0.1</span>
+					</div>
+				
+			</div>
+
+
+
+			<div id="popupInfo" class="row" style="margin-bottom:20px; margin-top: 20px; display: none;" >
+				<div class="twelve columns" >
+						
+						<div class="varela" id="info" style="color: rgb(200,200,200); letter-spacing: 0.025em; background-color: #1e1e1e; font-size: 13px; line-height: 2em; " >
+							<div id="closeButtonInfo" style="float:right;padding: 4px 12px; font-size: 15px;">x</div>
+							<div style="padding: 24px;">
+
+							<p>Hi Friends<br>
+							So the bitcoin global renderfarm has started to take shape. This is just the beginning, this is a closed secret beta. Just till everything is working and we test for bugs. Okay.. the basic steps would be something like this:
+							<hr>							
+							<span class="spot orbitron">STEP 1</span> Upload your zipped blender scene folder.<br>
+							Our system then calculates a recommended amount of bitcoin to get your job rendered.
+							<hr>
+							<span class="spot orbitron">STEP 2</span> (Optional) Increase your offered job reward to incentivize the render nodes to work on your queued job before others, or decrease the reward to render for cheaper, but might take longer if the reward is too low!<br>
+							<hr>
+							<span class="spot orbitron">STEP 3</span> Send the bitcoin to be held securely while your job is rendered. Workers will start automatically as bitcoin is deposited to your account. BitBlender dispenses the bitcoin reward to workers on a per frame basis. You can see the frames as they come in and have a chance to cancel the remaining frames incase you see a problem in the rendered result!<br><hr>
+
+							DEV Log:<br>
+							08APR Initial build<br>
+							08APR Client blender node working and connects<br>
+
+							<hr>
+							
+							TODO:<br>
+							Upload of files<br>
+							Parsing of blend files<br>
+							Dispatch of jobs<br>
+							Bitcoin escrow, payments<br>
+							User account system and notifications<br>
+							Frame collections, review and download.
+
+							<hr>
+
+							Thank you for your feedback and support!<br>
+							ROUAN VAN DER ENDE
+							</p>
+
+							</div>
+
+						</div>
+
+						
+	
+						
+				</div>
+			</div>
+
+
+
+		<div class="row gray" style="margin-top: 40px;">
+
+	      <div class="twelve columns" style="text-align:left;">
+	      	<div class="pad darkbg serviceBlock" >
+	      		<div class="varela caps title white" style="line-height: 1em;text-align: center;">SUBMIT NEW RENDER JOB</div>
+	      		
+	      		<div style="font-size: 12px;  margin-top:55px; min-height: 80px;text-align: left;">
+	      			
+	      			Drag your files here, or <a class="browse" href="#"> click to browse.</a>
+	      			<input type="file" multiple="multiple" style='display: none;' />
+                    <ul class='queue'>
+                        <li>
+                        </li>
+                    </ul>
+                    <div class='all-files'>
+                        <br>
+                        <div>
+                            <span class="code-title"># Download all your files</span>
+                            <br/>
+                            <br/>
+                            <a class="download-zip btn-cta" href="#">zip</a> <a class="download-tar btn-cta" href="#">tar.gz</a>
+                        </div>
+                    </div>
+
+
+
+	      		</div>
+	      	</div>
+		  </div>	
+		</div>
+
+
+
+		<div class="row gray" style="margin-top: 40px;">
+
+	      <div class="six columns" style="text-align:left;">
+	      	<div class="pad darkbg serviceBlock" >
+	      		<div class="varela caps title white" style="line-height: 1em;text-align: center;">Queued Render Jobs</div>
+	      		
+	      		<div style="font-size: 12px;  margin-top:55px; min-height: 80px;text-align: left;">
+	      			empty.
+	      		</div>
+	      	</div>
+		  </div>		
+
+	      <div class="six columns" style="text-align:left;">
+	      	<div class="pad darkbg serviceBlock"  >
+	      		<div id="workerListHeading" class="varela caps white title" style="line-height: 1em;text-align: center;">Connected render nodes</div>
+
+				<div id="workerlist" style="font-size: 12px; margin-top:55px;min-height: 80px;text-align: left;">
+	      			empty.
+	      		</div>
+
+	      	</div>
+		  </div>	
+
+		</div>
+
+		<div class="row white" style="clear:both;margin-top: 100px; margin-bottom: 100px">
+			<a href="/"><h1 class="logo orbitron gray" style="text-align: center; font-size: 14px" >built by bitlab</h1></a>
+		</div>
+
+
+
+
+		</div>
+	</div>
+</div>
+  
+	
+
+
+
+
+
+
+
+
+</body>
+
+
+</html>

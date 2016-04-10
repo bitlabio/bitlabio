@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>bitlab</title>
+  <meta name="description" content="depost and withdraw bitcoin">
+  <meta name="author" content="Rouan van der Ende">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="/css/normalize.css">
+  <link rel="stylesheet" href="/css/skeleton.css">
+  <link rel="stylesheet" href="/css/bitlab.css">
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+
+  <!-- Javascript
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<script src="/js/jquery.min.js"></script>	
+	<script src="/js/socket.io.js"></script>
+
+	<link rel="stylesheet" href="/js/styles/default.css">
+	<script src="/js/highlight.pack.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>	
+	<script src="/js/marked.min.js"></script>
+	<script src="/js/moment.min.js"></script>	
+	<script rc="/js/qrcode.js"></script>
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
+  <link rel="image_src" href="http://bitlab.io/images/profile.jpg" />
+  <meta property="og:image" content="http://bitlab.io/images/profile.jpg" />
+
+
+<script type="text/javascript">
+var user = {}	
+
+var keydown = function (k) {
+	//console.log(k)
+	if (k.keyCode == 27) {
+		//ESCAPE
+		$("#alias").html(user.alias); //UNDO alias change
+	}
+}
+
+$(document).ready( function () {
+		$.ajax({
+		    url: '/api/user', 
+		    type: 'GET', 
+		    contentType: 'application/json', 
+		    data: JSON.stringify({}) }
+		).done(function( userdata ) {
+			user = userdata
+			console.log(user)
+			render()
+		});
+
+
+		var render = function() {
+			$("#alias").html(user.alias)
+			$("#walletaddress").html(user.wallet)
+			
+		}
+
+		//ALIAS
+		$("#changeAlias").click( function (ev) {
+			$("#alias").html(`<input id="inputAlias" type="text" value="asdasd">`)
+			$("#inputAlias").select();
+			
+			$("#inputAlias").keypress(function (e) {
+				console.log(e)
+  				if (e.keyCode == 13) {
+  					//ENTER
+  					console.log($("#inputAlias").val())
+
+					$.ajax({
+					    url: '/api/user', 
+					    type: 'PUT', 
+					    contentType: 'application/json', 
+					    data: JSON.stringify({"alias": $("#inputAlias").val()}) }
+					).done(function( serverResponse ) {
+						console.log(serverResponse)
+					});
+
+  					//user.alias = $("#inputAlias").val();
+  					//$("#alias").html(user.alias)
+  				}
+  			});
+		})
+	document.addEventListener( 'keydown', keydown );
+})
+
+
+
+</script>
+
+<style>
+#findOutButton {
+	transition: color 0.1s linear;
+	transition: background 0.15s linear;
+}
+
+.serviceBlock {
+	border-top: 2px solid #1e1e1e;
+	background-color: #1e1e1e;
+	transition: background-color 2s linear;
+	transition: border-top 2s linear;
+	
+}
+
+.spot { color: #3dd7ab; }
+.topborder {border-top: 1px dashed #444;}
+.bottomborder {border-bottom: 1px dashed #444;}
+
+hr { 
+	border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(50, 50, 50, 0.75), rgba(0, 0, 0, 0));
+}
+
+#closeButtonInfo { color: rgb(100,100,100); cursor: pointer; }
+#closeButtonInfo:hover { color: rgb(255,100,100); }
+
+.link {  cursor: pointer;}
+.link:hover { color: #fff; }
+
+</style>
+
+</head>
+
+<body class="varela">
+	
+<div id="topbanner" style="width:100%; max-width: 100%;">
+<div id="topbannerContent" >
+<div class="container" >
+
+<div class="row" style="color: #fff; padding-top: 40px; padding-left: 12px;" >
+	<div class="orbitron" style="color:rgb(255,255,255); letter-spacing: 0.025em; font-size: 22px; position:relative; top: -5px;" >
+		bitlab
+	</div>
+</div>
+
+	<div class="row" style="margin-bottom:20px; margin-top: 20px; " >
+		<div class="twelve columns" >
+				<div class="varela" style="color: rgb(200,200,200); letter-spacing: 0.025em; background-color: #1e1e1e; font-size: 13px; line-height: 2em; " >
+					
+					<div style="padding: 24px;">
+						<div>ALIAS: <span id="alias" class="spot orbitron">...</span> <span id="changeAlias" class="link tiny gray">change</span></div>
+						<div>BTC: <span id="balance" class="spot orbitron">0.000000</span></div>
+						<div>DEPOSIT ADDRESS: <span id="walletaddress" class="white">...</span></div>
+					</div>
+
+				</div>
+		</div>
+	</div>
+
+		</div>
+	</div>
+</div>
+  
+	
+
+
+</body>
+
+
+</html>
