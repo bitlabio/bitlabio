@@ -30,7 +30,8 @@
 	<script>hljs.initHighlightingOnLoad();</script>	
 	<script src="/js/marked.min.js"></script>
 	<script src="/js/moment.min.js"></script>	
-	<script rc="/js/qrcode.js"></script>
+	<script src="/js/qrcode.js"></script>
+	<script src="/js/blockchain.js"></script>
 
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -40,6 +41,10 @@
 
 
 <script type="text/javascript">
+
+
+
+var state = "idle"
 var user = {}	
 
 var keydown = function (k) {
@@ -48,6 +53,74 @@ var keydown = function (k) {
 		//ESCAPE
 		$("#alias").html(user.alias); //UNDO alias change
 	}
+}
+
+
+var makeQR = function() {
+	var qrcode = new QRCode(document.getElementById("qrcode"), {
+		width : 200,
+		height : 200,
+		correctLevel : QRCode.CorrectLevel.L
+		//correctLevel : QRCode.CorrectLevel.L
+	});
+
+	function makeCode () {		
+		var qrText = "bitcoin:";
+		qrText+= user.walletaddress
+		console.log(qrText);	
+
+
+		
+		qrcode.makeCode(qrText);
+
+	}
+
+	makeCode();
+}
+
+var bitcoinTX = function(msg) {
+	console.log("blockchain.info:")
+	console.log(msg)
+}
+
+var bitcoinAddrInfo = function(walletaddress) {
+	// https://blockchain.info/rawaddr/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+
+	$.ajax({
+	    url: '/api/rawaddr/'+walletaddress, 
+	    type: 'GET', 
+	    contentType: 'application/json'}
+	).done(function( rawaddrdata ) {
+		console.log(rawaddrdata)
+		renderAddrData(rawaddrdata)
+	});
+}
+
+var renderAddrData = function(rawaddrdata) {
+	$("#balance").html( (rawaddrdata.final_balance/100000000).toFixed(8) )
+
+
+	var alltxhtml = ``
+	for (var t in rawaddrdata.txs) {
+
+		
+		
+		
+
+		alltxhtml += moment(rawaddrdata.txs[t].time*1000).format("dddd, MMMM Do YYYY, h:mm:ss a") 
+		
+		for (var o in rawaddrdata.txs[t].out) {
+			if (rawaddrdata.txs[t].out[o].addr == user.walletaddress) {
+				alltxhtml += ' +'+(rawaddrdata.txs[t].out[o].value/100000000).toFixed(8)
+			}
+		 
+		}
+
+		alltxhtml += "<br>"
+	}
+	$("#transactionLog").html(alltxhtml)
+
+
 }
 
 $(document).ready( function () {
@@ -59,19 +132,24 @@ $(document).ready( function () {
 		).done(function( userdata ) {
 			user = userdata
 			console.log(user)
+
+			bitcoinAddrInfo(user.walletaddress)
+			blockchainListen(user.walletaddress, bitcoinTX);
+			makeQR();
 			render()
 		});
 
 
 		var render = function() {
 			$("#alias").html(user.alias)
-			$("#walletaddress").html(user.wallet)
+			$("#walletaddress").html(`<a href="https://blockchain.info/address/`+user.walletaddress+`">`+user.walletaddress+`</a>`)
 			
 		}
 
 		//ALIAS
 		$("#changeAlias").click( function (ev) {
-			$("#alias").html(`<input id="inputAlias" type="text" value="asdasd">`)
+			state = "editingAlias";
+			$("#alias").html(`<input id="inputAlias" type="text" value="`+user.alias+`">`)
 			$("#inputAlias").select();
 			
 			$("#inputAlias").keypress(function (e) {
@@ -87,6 +165,8 @@ $(document).ready( function () {
 					    data: JSON.stringify({"alias": $("#inputAlias").val()}) }
 					).done(function( serverResponse ) {
 						console.log(serverResponse)
+						user.alias = $("#inputAlias").val()
+						render();
 					});
 
   					//user.alias = $("#inputAlias").val();
@@ -95,6 +175,7 @@ $(document).ready( function () {
   			});
 		})
 	document.addEventListener( 'keydown', keydown );
+
 })
 
 
@@ -131,6 +212,9 @@ hr {
 .link {  cursor: pointer;}
 .link:hover { color: #fff; }
 
+#widthdrawButton {
+	background: rgb(61,215,171);
+}
 </style>
 
 </head>
@@ -152,13 +236,35 @@ hr {
 				<div class="varela" style="color: rgb(200,200,200); letter-spacing: 0.025em; background-color: #1e1e1e; font-size: 13px; line-height: 2em; " >
 					
 					<div style="padding: 24px;">
-						<div>ALIAS: <span id="alias" class="spot orbitron">...</span> <span id="changeAlias" class="link tiny gray">change</span></div>
-						<div>BTC: <span id="balance" class="spot orbitron">0.000000</span></div>
-						<div>DEPOSIT ADDRESS: <span id="walletaddress" class="white">...</span></div>
+						<div>ALIAS: <span id="alias" class="white varela"></span> <span id="changeAlias" class="link tiny gray">change</span></div>
+						<div>BTC: <span id="balance" class="white varela"></span></div>
+						<div>DEPOSIT ADDRESS: <span id="walletaddress" class="white"></span></div>
+						<div id="qrcode" style="width:200px; height:200px; padding: 5px; margin-top:0px; background: #fff;"></div>
+						
+						
 					</div>
 
 				</div>
 		</div>
+
+		<div class="twelve columns" >
+			<div class="varela" style="color: rgb(100,100,100); letter-spacing: 0.025em; background-color: rgb(235,235,235); font-size: 13px; line-height: 2em; padding: 24px 24px 12px 24px;margin: 0;" >
+				<div style="width: 100%;">
+						<div style="float:left;padding-right: 12px;margin-top: 6px;">SEND</div>
+						<input type="text" placeholder="1Ex4mP1eD3st1N4T10NAdDr3s5..." style="width: 310px;">
+						<input type="text" placeholder="0.00200000" style="width: 120px;text-align: right;">
+						<button id="widthdrawButton">CONFIRM</button>
+				</div>
+			</div>
+		</div>
+
+
+		<div class="twelve columns" >
+			<div class="varela" style="color: rgb(50,50,50); letter-spacing: 0.025em; background-color: #fff; font-size: 13px; line-height: 2em; " >
+				<div id="transactionLog" style="padding: 24px;"></div>
+			</div>
+		</div>
+
 	</div>
 
 		</div>

@@ -1,6 +1,3 @@
-var bitblender = {} 
-//var bitblender = {version: 1, server:'http://bitlab.io:3001'}
-
 /* 
 bitblender worker client
 by bitlab.io - author: Rouan van der Ende
@@ -39,7 +36,10 @@ Install needed nodejs packages:
 
 Set your bitcoin recieve address below. This is where your earnings will be paid to.
 If you set this wrong you wont get paid!!                     
- 													*/
+*/
+
+// master state object containing configuration
+var bitblender = {} 
 
 // identifier
 bitblender.workername = "rouanTestNode"; 

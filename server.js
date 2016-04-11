@@ -90,13 +90,14 @@ app.use(logger);
 
 
 var users = function (req, res, next) {
+  console.log(req.session.hash);   
   if (req.session.hash) {
     db.users.findOne({"sessionhash":req.session.hash}, function(err,dbuser) {
       if (dbuser == null) {
         //USER NOT RECOGNIZED (YET?) 
         console.log("invalid sessionhash!!");   
         delete req.session.hash
-        next();
+        newusers(req,res,next);
       } else {
         //USER RECOGNIZED
         delete req.session.new  //delete new flag (bug workaround)
@@ -106,7 +107,7 @@ var users = function (req, res, next) {
       }
     })
   } else {
-    next();
+    newusers(req,res,next);
   }
 
   
@@ -418,6 +419,33 @@ var scrypt = require("./js/scrypt.js"); // modified https://github.com/tonyg/js-
 
 var lasthash = ""; //last generated (could be malicious)
 var lastlogin = ""; //last successful (retain!)
+
+var https = require('https');
+
+app.get('/api/rawaddr/:addr', (req,res) => {
+  //this calls blockchain.info api for bitcoin wallet data
+      console.log(req.params)
+     https.get({
+          host: 'blockchain.info',
+          path: '/rawaddr/'+req.params.addr
+      }, function(response) {
+          console.log(".")
+          // Continuously update stream with data
+          var body = '';
+          response.on('data', function(d) {
+              body += d;
+          });
+          response.on('end', function() {
+              // Data reception is done, do whatever with it!
+              var parsed = JSON.parse(body);
+              res.json(parsed)
+          });
+      }).on('error', (e) => {
+        console.error(e);
+      });
+
+
+});
 
 app.get('/api/user', (req,res) => {
   res.json(req.user)
