@@ -46,6 +46,9 @@
 
 var state = "idle"
 var user = {}	
+var wallet = {}
+wallet.balance = "0.000"
+wallet.txs = []
 
 var keydown = function (k) {
 	//console.log(k)
@@ -83,23 +86,70 @@ var bitcoinTX = function(msg) {
 	console.log(msg)
 }
 
-var bitcoinAddrInfo = function(walletaddress) {
-	// https://blockchain.info/rawaddr/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+var bitcoinUpdateBalance = function(walletaddress) {
+	console.log("updating balance")
+	// DEPREC: https://blockchain.info/rawaddr/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
 
+	// http://localhost/api/blockr/address/balance/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+	// http://localhost/api/blockr/address/txs/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
 	$.ajax({
-	    url: '/api/rawaddr/'+walletaddress, 
+	    url: '/api/blockr/address/balance/'+walletaddress, 
 	    type: 'GET', 
 	    contentType: 'application/json'}
-	).done(function( rawaddrdata ) {
-		console.log(rawaddrdata)
-		renderAddrData(rawaddrdata)
+	).done(function( addressdata ) {
+		console.log("balance:")
+		var parsed = JSON.parse(addressdata)
+		console.log(parsed)
+		wallet.balance = parsed.data.balance
+		$("#balance").html( wallet.balance )
 	});
 }
 
-var renderAddrData = function(rawaddrdata) {
-	$("#balance").html( (rawaddrdata.final_balance/100000000).toFixed(8) )
+var bitcoinUpdateTransactions = function(walletaddress) {
+	console.log("updating transactions")
+	// DEPREC: https://blockchain.info/rawaddr/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+
+	// http://localhost/api/blockr/address/balance/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+	// http://localhost/api/blockr/address/txs/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+	$.ajax({
+	    url: '/api/blockr/address/txs/'+walletaddress, 
+	    type: 'GET', 
+	    contentType: 'application/json'}
+	).done(function( transactiondata ) {
+		
+		var parsed = JSON.parse(transactiondata)
+		wallet.txs = parsed.data.txs
+		console.log("transactions:")
+		console.log(parsed)
+
+		var alltxhtml = ``
+		for (var t in wallet.txs) {
+
+			
+			
+			
+			alltxhtml += `<a href="https://blockchain.info/tx/`+wallet.txs[t].tx+`">`
+			alltxhtml += moment(wallet.txs[t].time_utc).fromNow() + "_"; 
+			alltxhtml += moment(wallet.txs[t].time_utc).format("D-MMM-YYYY_HH:mm:ss") +" ";
+			if (parseFloat(wallet.txs[t].amount) > 0 ) { 
+				alltxhtml += "RECIEVED "
+			} else {
+				alltxhtml += "WITHDRAWAL "
+			}
+			alltxhtml += "("+wallet.txs[t].confirmations+' confirmations) '
+			alltxhtml += " AMOUNT: BTC"+wallet.txs[t].amount
+			alltxhtml += "</a><br>"
+		}
+		$("#transactionLog").html(alltxhtml)
 
 
+	});
+}
+
+var renderWallet = function() {
+	$("#balance").html( wallet.balance )
+
+/*
 	var alltxhtml = ``
 	for (var t in rawaddrdata.txs) {
 
@@ -119,7 +169,7 @@ var renderAddrData = function(rawaddrdata) {
 		alltxhtml += "<br>"
 	}
 	$("#transactionLog").html(alltxhtml)
-
+	*/
 
 }
 
@@ -133,7 +183,9 @@ $(document).ready( function () {
 			user = userdata
 			console.log(user)
 
-			bitcoinAddrInfo(user.walletaddress)
+			bitcoinUpdateBalance(user.walletaddress)
+			bitcoinUpdateTransactions(user.walletaddress)
+
 			blockchainListen(user.walletaddress, bitcoinTX);
 			makeQR();
 			render()
@@ -147,33 +199,134 @@ $(document).ready( function () {
 		}
 
 		//ALIAS
+		var inputAlias = false;
 		$("#changeAlias").click( function (ev) {
-			state = "editingAlias";
-			$("#alias").html(`<input id="inputAlias" type="text" value="`+user.alias+`">`)
-			$("#inputAlias").select();
+
+			if (inputAlias == true) {
+						//ENTER
+						inputAlias = false;
+	  					console.log($("#inputAlias").val())
+
+						$.ajax({
+						    url: '/api/user', 
+						    type: 'PUT', 
+						    contentType: 'application/json', 
+						    data: JSON.stringify({"alias": $("#inputAlias").val()}) }
+						).done(function( serverResponse ) {
+							console.log(serverResponse)
+							user.alias = $("#inputAlias").val()
+							render();
+						});
+			} else {
+				$("#alias").html(`<input id="inputAlias" type="text" value="`+user.alias+`">`)
+				inputAlias = true;
+				$("#inputAlias").select();
+						
+				$("#inputAlias").keypress(function (e) {
+					console.log(e)
+	  				if (e.keyCode == 13) {
+	  					//ENTER
+	  					console.log($("#inputAlias").val())
+
+						$.ajax({
+						    url: '/api/user', 
+						    type: 'PUT', 
+						    contentType: 'application/json', 
+						    data: JSON.stringify({"alias": $("#inputAlias").val()}) }
+						).done(function( serverResponse ) {
+							console.log(serverResponse)
+							user.alias = $("#inputAlias").val()
+							render();
+						});
+
+	  					//user.alias = $("#inputAlias").val();
+	  					//$("#alias").html(user.alias)
+	  				}
+	  			});			
+			}
 			
-			$("#inputAlias").keypress(function (e) {
-				console.log(e)
-  				if (e.keyCode == 13) {
-  					//ENTER
-  					console.log($("#inputAlias").val())
-
-					$.ajax({
-					    url: '/api/user', 
-					    type: 'PUT', 
-					    contentType: 'application/json', 
-					    data: JSON.stringify({"alias": $("#inputAlias").val()}) }
-					).done(function( serverResponse ) {
-						console.log(serverResponse)
-						user.alias = $("#inputAlias").val()
-						render();
-					});
-
-  					//user.alias = $("#inputAlias").val();
-  					//$("#alias").html(user.alias)
-  				}
-  			});
+	
 		})
+
+
+
+
+
+		var sendButtonStatus = "send";
+		$("#sendbutton").css("background-color", "#6cac72")
+		$("#sendbutton").css("color", "#ffffff")
+		$("#sendbutton").html("SEND");	
+
+
+		$("#sendbutton").click( function () {
+			var btcsend = {}
+			btcsend.destination = $("#sendaddress").val()
+			btcsend.amount = $("#sendamount").val()
+			console.log(btcsend)
+			console.log("sendButtonStatus:"+sendButtonStatus)
+
+
+			if (sendButtonStatus == "confirm") {
+				
+
+				$("#sendbutton").css("background-color", "#d14747")
+				$("#sendbutton").html("SENDING...");	
+
+				sendButtonStatus = "sending";
+				$.ajax({
+				    url: '/api/send', 
+				    type: 'PUT', 
+				    contentType: 'application/json', 
+				    data: JSON.stringify(btcsend) }
+				).done(function( sendResult ) {
+					console.log(sendResult)
+					$("#sendbutton").css("background-color", "#2eb8b8")
+					$("#sendbutton").css("color", "#ffffff")
+					$("#sendbutton").html("SENT!"); 
+				});
+			}
+
+			if (sendButtonStatus == "send") {
+
+
+
+			    // fees:
+			    // 0.000050   ECONOMIC
+			    // 0.000150   NORMAL
+			    // 0.000500   PRIORITY
+			    var fee = 0.0001 
+			    console.log(btcsend)
+			    console.log(wallet.balance)
+				$("#sendbutton").css("background-color", "#d14747")
+				$("#sendbutton").css("color", "#ffffff")
+				$("#sendbutton").html("CONFIRM?");
+				sendButtonStatus = "confirm";	
+
+
+			}
+
+
+
+		})
+
+		var amountError = function() {
+			$("#sendamount").focus();
+		}		
+
+		$("#sendbutton").hover( function () {}, function() {
+			if (sendButtonStatus == "confirm") {
+				sendButtonStatus = "send";
+				
+				$("#sendbutton").css("background-color", "#6cac72")
+				$("#sendbutton").css("color", "#ffffff")
+				$("#sendbutton").html("SEND");	
+			}
+			
+		})
+
+
+
+
 	document.addEventListener( 'keydown', keydown );
 
 })
@@ -183,6 +336,9 @@ $(document).ready( function () {
 </script>
 
 <style>
+
+#inputAlias { color: rgb(61,215,171); }
+
 #findOutButton {
 	transition: color 0.1s linear;
 	transition: background 0.15s linear;
@@ -212,9 +368,20 @@ hr {
 .link {  cursor: pointer;}
 .link:hover { color: #fff; }
 
-#widthdrawButton {
+#sendbutton {
+	border: none;
 	background: rgb(61,215,171);
 }
+
+.sendconfirm {
+	background-color: #d14747;
+	color: #ffffff;
+}
+
+*::-webkit-input-placeholder {
+    color: rgb(230,230,230);
+}
+
 </style>
 
 </head>
@@ -248,20 +415,26 @@ hr {
 		</div>
 
 		<div class="twelve columns" >
-			<div class="varela" style="color: rgb(100,100,100); letter-spacing: 0.025em; background-color: rgb(235,235,235); font-size: 13px; line-height: 2em; padding: 24px 24px 12px 24px;margin: 0;" >
+			<div class="varela" style="color: rgb(100,100,100); letter-spacing: 0.025em; background-color: rgb(235,235,235); font-size: 13px; line-height: 2em; padding: 18px 24px 12px 24px;margin: 0;" >
 				<div style="width: 100%;">
-						<div style="float:left;padding-right: 12px;margin-top: 6px;">SEND</div>
-						<input type="text" placeholder="1Ex4mP1eD3st1N4T10NAdDr3s5..." style="width: 310px;">
-						<input type="text" placeholder="0.00200000" style="width: 120px;text-align: right;">
-						<button id="widthdrawButton">CONFIRM</button>
+						<div style="padding-right: 12px;">SEND BITCOIN FROM ACCOUNT TO:</div>
+						<div style="padding-right: 12px;">Please note a transaction fee of 0.0001 BTC will be added.</div>
+						<div>
+							<input id="sendaddress" type="text" placeholder="1Ex4mP1eD3st1N4T10NAdDr3s5..." style="width: 310px;">
+							<input id="sendamount" type="text" placeholder="0.00000000" style="width: 120px;text-align: right;">
+							<button id="sendbutton" style="width: 150px; text-align: center;">NEXT</button>
+						</div>
+						
+						<div id="sendMessages" style="padding-right: 12px;">...</div>
 				</div>
 			</div>
 		</div>
 
 
 		<div class="twelve columns" >
-			<div class="varela" style="color: rgb(50,50,50); letter-spacing: 0.025em; background-color: #fff; font-size: 13px; line-height: 2em; " >
-				<div id="transactionLog" style="padding: 24px;"></div>
+			<div class="varela" style="color: rgb(200,200,200); letter-spacing: 0.025em; background-color: #1e1e1e; font-size: 13px; line-height: 2em; padding: 24px;" >
+				<div>TRANSACTION HISTORY:</div>
+				<div id="transactionLog"></div>
 			</div>
 		</div>
 

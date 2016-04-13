@@ -349,10 +349,129 @@ var makeWallet = function (ownerUniqueHash, cb) {
     }
   })
 
-  
 }
 
-/* ========================================================================== */
+var blockrCall = function(command, walletAddress, cb) {
+  console.log("w:"+walletAddress)
+  var http = require("http")
+    var unspentdata = "";
+    http.get({
+          host: 'btc.blockr.io',
+          path: '/api/v1/address/'+command+'/'+walletAddress
+      }, function(response) {
+          // Continuously update stream with data
+          response.on('data', function(d) {
+              unspentdata += d;
+          });
+          response.on('end', function() {
+              // Data reception is done, do whatever with it!
+              if (unspentdata[0] == "{") {
+                var parsed = JSON.parse(unspentdata);
+                cb(parsed)
+              } else {
+                console.log("blockr ERROR:")
+              }
+              
+          });
+      }).on('error', (e) => {
+        console.error(e);
+      });
+}
+
+
+app.put('/api/send', (req, res) => {
+    //console.log("BITCOIN SEND")
+    // fees:
+    // 0.000050   ECONOMIC
+    // 0.000150   NORMAL
+    // 0.000500   PRIORITY
+    var fee = 0.0001 
+
+    //console.log(req.body)
+    //console.log(req.user)
+    var needed = parseFloat(req.body.amount) + fee
+    //console.log("needed:"+needed)
+    var inputs = []
+    blockrCall("unspent", req.user.walletaddress, function (unspent) {
+      //console.log("UNSPENT:")
+      var available = 0
+      for (var t in unspent.data.unspent) {
+        if (needed > available) { 
+          if (unspent.data.unspent[t].confirmations >= 1) { 
+            inputs.push(unspent.data.unspent[t])
+            available += parseFloat(unspent.data.unspent[t].amount)  
+          }
+        }
+      }
+      //console.log("INPUTS:")
+      //console.log(inputs)
+
+    // DO TX
+    if (needed <= available) { 
+      db.wallets.findOne({"ownerUniqueHash": req.user.uniquehash}, (err,result) => {
+        //console.log(result)
+        var bitcoin = require("bitcoinjs-lib")
+
+        var key = bitcoin.ECPair.fromWIF(result.privatekey);
+        var tx = new bitcoin.TransactionBuilder();
+
+        for (var i in inputs) {
+          tx.addInput(inputs[i].tx, inputs[i].n);  
+        }
+        
+        tx.addOutput(req.body.destination, Math.round(req.body.amount*100000000))
+        available -= req.body.amount
+
+        //return change
+        if (Math.round( (available - fee)*100000000) > 0) {
+          
+          tx.addOutput(req.user.walletaddress, Math.round( (available - fee)*100000000))
+        }
+        //done
+        tx.sign(0, key);
+        var txhex = tx.build().toHex()
+        //console.log(tx.build().toHex());
+        //console.log(txhex)
+
+        var request = require("request")
+
+        //console.log("TRANSMIT....")
+        request.post({url:'https://blockchain.info/pushtx', form: {tx:txhex}}, function(err,httpResponse,body){ /* ... */ 
+          console.log(req.body)
+          //console.log("TRANSMITTED")
+          //console.log(err)
+          //console.log(httpResponse)
+          //console.log(body.toString())
+          var returnObj = {"status" : body.toString()}
+          res.json(returnObj)
+        })
+
+
+
+        
+      })
+    }
+      
+
+      //console.log(unspent)
+  })
+    
+
+
+})
+
+/* - - - -  */
+
+app.get('/admin', (req,res) => {
+  req.session.hash = "a64b00e8e36fa32b4144b561749c32ac3ae22664ecaff815c7821936ad33ce21";
+  res.end("done.")
+})
+
+var makeWithdrawal = function(ownerUniqueHash, destination, amount, cb) {
+
+}
+
+/* - - - -  */
 
 app.get('/account', (req, res) => {
   res.sendFile(path.join(__dirname+'/view/account.html'));  
@@ -422,33 +541,92 @@ var lastlogin = ""; //last successful (retain!)
 
 var https = require('https');
 
+
+
+// BITCOIN API
+// COPY of http://blockr.io/documentation/api
+app.get('/api/blockr/*', (req,res) => {
+  //http://btc.blockr.io/api/v1/address/balance/198aMn6ZYAczwrE5NvNTUMyJ5qkfy4g3Hi
+  //this uses the blockr.io api
+  //todo in future is run our own full node.  
+  console.log(req.path)
+
+  var a = "/api/blockr/".length
+  var b = req.path.length - a
+
+  var apicall = req.path.slice(a,req.path.length);
+  console.log(apicall)
+
+    var http = require("http")
+      var blockchaindata = "";
+     http.get({
+          host: 'btc.blockr.io',
+          path: '/api/v1/'+apicall
+      }, function(response) {
+          // Continuously update stream with data
+          response.on('data', function(d) {
+              blockchaindata += d;
+          });
+          response.on('end', function() {
+              // Data reception is done, do whatever with it!
+              if (blockchaindata[0] == "{") {
+                var parsed = JSON.parse(blockchaindata);
+                console.log(parsed)
+                res.end(blockchaindata)
+              } else {
+                console.log("blockr ERROR:")
+                console.log(blockchaindata)
+              }
+              
+          });
+      }).on('error', (e) => {
+        console.error(e);
+        res.json(e)
+      });
+});
+
+
+
+/*
+//this calls blockchain.info api for bitcoin wallet data
 app.get('/api/rawaddr/:addr', (req,res) => {
-  //this calls blockchain.info api for bitcoin wallet data
-      console.log(req.params)
+  //THIS FAILS OFTEN!
+
+  
+  //console.log(req.params)
+      var blockchaindata = "";
      https.get({
           host: 'blockchain.info',
           path: '/rawaddr/'+req.params.addr
       }, function(response) {
-          console.log(".")
           // Continuously update stream with data
-          var body = '';
           response.on('data', function(d) {
-              body += d;
+              blockchaindata += d;
           });
           response.on('end', function() {
               // Data reception is done, do whatever with it!
-              var parsed = JSON.parse(body);
-              res.json(parsed)
+              if (blockchaindata[0] == "{") {
+                var parsed = JSON.parse(blockchaindata);
+                console.log(parsed)
+                res.end(blockchaindata)
+              } else {
+                console.log("blockchaindata ERROR:")
+                console.log(blockchaindata)
+              }
+              
           });
       }).on('error', (e) => {
         console.error(e);
+        res.json(e)
       });
-
-
 });
+*/
 
 app.get('/api/user', (req,res) => {
-  res.json(req.user)
+  var apiuser = {}
+  apiuser.alias = req.user.alias
+  apiuser.walletaddress = req.user.walletaddress
+  res.json(apiuser)
 });
 
 app.put('/api/user', (req,res) => {
