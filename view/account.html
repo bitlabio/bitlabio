@@ -81,9 +81,24 @@ var makeQR = function() {
 	makeCode();
 }
 
-var bitcoinTX = function(msg) {
+var bitcoinTX = function(data) {
 	console.log("blockchain.info:")
-	console.log(msg)
+	console.log(data)
+	var unconfirmed = ''
+	for (var i in data.x.inputs) {
+		if (data.x.inputs[i].prev_out.addr == user.walletaddress ) {
+			unconfirmed += "OUTGOING "+data.x.inputs[i].prev_out.value/100000000 +"<br>"
+		}
+	}
+
+	for (var o in data.x.out) {
+		if (data.x.out[o].addr == user.walletaddress) { 
+			unconfirmed += "INCOMING "+data.x.out[o].value/100000000 +"<br>"
+		}
+	}
+	unconfirmed += '<hr>'
+	$("#transactionLogUnconfirmed").prepend(unconfirmed)
+	//bitcoinUpdateBalance(user.walletaddress);
 }
 
 var bitcoinUpdateBalance = function(walletaddress) {
@@ -93,7 +108,7 @@ var bitcoinUpdateBalance = function(walletaddress) {
 	// http://localhost/api/blockr/address/balance/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
 	// http://localhost/api/blockr/address/txs/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
 	$.ajax({
-	    url: '/api/blockr/address/balance/'+walletaddress, 
+	    url: '/api/blockr/address/balance/'+walletaddress+`?confirmations=0`, 
 	    type: 'GET', 
 	    contentType: 'application/json'}
 	).done(function( addressdata ) {
@@ -433,8 +448,13 @@ hr {
 
 		<div class="twelve columns" >
 			<div class="varela" style="color: rgb(200,200,200); letter-spacing: 0.025em; background-color: #1e1e1e; font-size: 13px; line-height: 2em; padding: 24px;" >
+				
+				<div>TRANSACTION UNCONFIRMED:</div>
+				<div id="transactionLogUnconfirmed"></div>
+
 				<div>TRANSACTION HISTORY:</div>
 				<div id="transactionLog"></div>
+
 			</div>
 		</div>
 
