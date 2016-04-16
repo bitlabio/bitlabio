@@ -17,12 +17,16 @@ html { background: rgb(40,40,40); }
 .postContent a:hover { text-decoration: none; color: #5fe8ce;}
 .postContent h1,h2,h3,h4 {   font-weight: 700; 
   color: #fff;
-  background:rgb(30,30,30); 
   letter-spacing: 0.025em; 
-  font-size: 17px; 
   line-height: 2em; 
-  padding: 2em 0 1em 0; 
 }
+
+h1 { font-size: 36px; }
+h2 { font-size: 32px; }
+h3 { font-size: 28px; }
+h4 { font-size: 26px; }
+h5 { font-size: 22px; }
+
 .postContent table { width: 100%; }
 
 .postContent pre { 

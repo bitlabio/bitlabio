@@ -108,7 +108,7 @@ var bitcoinUpdateBalance = function(walletaddress) {
 	// http://localhost/api/blockr/address/balance/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
 	// http://localhost/api/blockr/address/txs/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
 	$.ajax({
-	    url: '/api/blockr/address/balance/'+walletaddress+`?confirmations=0`, 
+	    url: '/api/blockr/address/balance/'+walletaddress, 
 	    type: 'GET', 
 	    contentType: 'application/json'}
 	).done(function( addressdata ) {
@@ -422,7 +422,6 @@ hr {
 						<div>BTC: <span id="balance" class="white varela"></span></div>
 						<div>DEPOSIT ADDRESS: <span id="walletaddress" class="white"></span></div>
 						<div id="qrcode" style="width:200px; height:200px; padding: 5px; margin-top:0px; background: #fff;"></div>
-						
 						
 					</div>
 

@@ -1,4 +1,8 @@
 //HTML FRONTEND
+var user = {}
+var wallet = {}
+wallet.balance = "0.000"
+wallet.txs = []
 
 var workers = []
 
@@ -22,8 +26,55 @@ socket.on('bitblenderworkerconnect', function(worker) {
 	console.log(worker)
 })
 
-var render = function() {
 
+
+
+
+var updateUser = function() {
+    console.log("updating user")
+    $.ajax({
+        url: '/api/user', 
+        type: 'GET', 
+        contentType: 'application/json', 
+        data: JSON.stringify({}) }
+        ).done(function( userdata ) {
+            user = userdata
+            console.log(user)
+            bitcoinUpdateBalance(user.walletaddress)
+        });
+}
+
+
+var bitcoinUpdateBalance = function(walletaddress) {
+    console.log("updating balance")
+    // DEPREC: https://blockchain.info/rawaddr/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+
+    // http://localhost/api/blockr/address/balance/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+    // http://localhost/api/blockr/address/txs/1EgsQ28DHSdrhHgK2ZJVYU4747nFBYxzab
+    $.ajax({
+        url: '/api/blockr/address/balance/'+walletaddress, 
+        type: 'GET', 
+        contentType: 'application/json'}
+    ).done(function( addressdata ) {
+        console.log("balance:")
+        var parsed = JSON.parse(addressdata)
+        console.log(parsed)
+        wallet.balance = parsed.data.balance
+        $("#balance").html( wallet.balance )
+    });
+}
+
+setInterval(bitcoinUpdateBalance, 1000 * 60 * 10); // update every 10 minutes.
+
+
+
+
+
+
+var render = function() {
+    $("#alias").html(user.alias)
+    $("#walletaddress").html(`<a href="https://blockchain.info/address/`+user.walletaddress+`">`+user.walletaddress+`</a>`)
+            
 	
 	$(`#workerListHeading`).html(workers.length+" worker nodes")
 
@@ -33,6 +84,7 @@ var render = function() {
 	}
 
 	$(`#workerlist`).html(workerHtml)
+
 
 }
 
@@ -44,6 +96,9 @@ setInterval(render, 1000);
 
 
 $(document).ready( function () {
+
+    updateUser();
+
 	console.log("loading upload code...")
 
 

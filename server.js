@@ -334,6 +334,57 @@ app.get('/bitblender', (req, res) => {
 
 /* == BITCOIN STUFF ======================================================================== */
 
+
+app.get('/api/updateall', (req, res) => {
+ hardupdateAll( (result) => {
+  if (result == "success") { res.end("success")}
+ })
+});
+
+var hardupdateAll = function (cb) {
+  console.log("func hardupdateAll : BLOCKR BALANCE UPDATE")
+   db.wallets.find({}, (err,dbw) => {
+      
+    console.log("attempting to update the confirmed balances of "+dbw.length+" wallets.")
+    
+    var walletsstring = ""
+    for (var w in dbw) {
+      walletsstring += dbw[w].address
+      if (w != dbw.length-1) { walletsstring += ","}
+    }
+
+    var counttarget = dbw.length;  
+    var count = 0;
+    blockrCall("balance", walletsstring, (balanceUpdate) => {
+      if (balanceUpdate.status == "success") {
+
+        for (var wd in balanceUpdate.data) {
+          for (var w in dbw) {
+            if (dbw[w].address == balanceUpdate.data[wd].address) {
+              //SAME ADDRESS
+              dbw[w].balance = balanceUpdate.data[wd].balance;
+              
+              db.wallets.update({"address": dbw[w].address}, dbw[w], (err,result) => {
+                count = count + 1;
+                console.log("updated: "+count+"/"+counttarget);
+                if (count == counttarget) { 
+                  console.log("DONE"); 
+                  cb("success")
+                }
+
+              })
+
+              //db.wallets.update({})
+            }
+          }
+        }
+        
+      }
+    })
+  });
+  //blockrCall
+}
+
 var makeWallet = function (ownerUniqueHash, cb) {
   var bitcoin = require("bitcoinjs-lib")
   var keyPair = bitcoin.ECPair.makeRandom()
@@ -403,8 +454,9 @@ app.put('/api/send', (req, res) => {
           }
         }
       }
-      //console.log("INPUTS:")
-      //console.log(inputs)
+
+      console.log("INPUTS:")
+      console.log(inputs)
 
     // DO TX
     if (needed <= available) { 
@@ -415,20 +467,23 @@ app.put('/api/send', (req, res) => {
         var key = bitcoin.ECPair.fromWIF(result.privatekey);
         var tx = new bitcoin.TransactionBuilder();
 
-        for (var i in inputs) {
-          tx.addInput(inputs[i].tx, inputs[i].n);  
-        }
+        for (var i in inputs) { tx.addInput(inputs[i].tx, inputs[i].n); }
         
         tx.addOutput(req.body.destination, Math.round(req.body.amount*100000000))
         available -= req.body.amount
 
         //return change
         if (Math.round( (available - fee)*100000000) > 0) {
-          
-          tx.addOutput(req.user.walletaddress, Math.round( (available - fee)*100000000))
+          var outputamounttemp = Math.round( (available - fee)*100000000);
+          console.log("add output:"+req.user.walletaddress+" amount: "+ outputamounttemp)
+          tx.addOutput(req.user.walletaddress, outputamounttemp)
         }
         //done
-        tx.sign(0, key);
+        //tx.sign(0, key);
+
+        for (var i in inputs) { tx.sign(parseInt(i), key); }
+
+
         var txhex = tx.build().toHex()
         //console.log(tx.build().toHex());
         //console.log(txhex)
@@ -460,16 +515,14 @@ app.put('/api/send', (req, res) => {
 
 })
 
-/* - - - -  */
+/* - - - -  
+
 
 app.get('/admin', (req,res) => {
   req.session.hash = "a64b00e8e36fa32b4144b561749c32ac3ae22664ecaff815c7821936ad33ce21";
   res.end("done.")
 })
-
-var makeWithdrawal = function(ownerUniqueHash, destination, amount, cb) {
-
-}
+*/
 
 /* - - - -  */
 
