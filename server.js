@@ -33,6 +33,7 @@ bitlab.version = 2
         https://nodejs.org/en/docs/es6/
 
                                                 */
+
 var config      = require('./config.json')
 var express     = require('express');
 var app         = express();
@@ -43,6 +44,8 @@ var multer      = require('multer')
 var upload      = multer({ dest: 'uploads/' })
 var mongojs     = require('mongojs')
 var mkdirp      = require('mkdirp');
+var net         = require('net');
+var MailParser  = require("mailparser").MailParser;
 
 var _ = require('underscore')
 
@@ -50,6 +53,8 @@ var db          = mongojs('bitlab2',[
                   "posts",
                   "users",
                   "wallets",
+                  "mail",
+                  "jobs",
                   "roles",
                   "roles_users",
                   "permissions",
@@ -229,13 +234,16 @@ io.on('connection', function (socket) {
 
 
   socket.on('disconnect', function () { 
-    console.log("node disconnected")
-    console.log(socket.id)
-    workersDisconnect(socket.id);
-    webclientsDisconnect(socket.id);
-    socket.broadcast.emit('workers', workers);
-    globalsocket = socket.broadcast;
-    console.log("sent workers list")
+    
+      console.log("node disconnected")
+      console.log(socket.id)
+      workersDisconnect(socket.id);
+      webclientsDisconnect(socket.id);
+      socket.broadcast.emit('workers', workers);
+      globalsocket = socket.broadcast;
+      console.log("sent workers list")
+
+    
   });
 
 });
@@ -262,12 +270,21 @@ function workersDisconnect(socketid) {
 
 function parseBlend(filename)
 {
+    //http://www.atmind.nl/blender/blender-sdna.html
+    //https://github.com/jamesyonan/brenda
+
     console.log("Opening file: ", filename);
     var file = blender.open(filename);
 
+    console.log(file)
+    //console.log(file.dna.blockMap.Scene.struct.fields)
     console.log("File version: ", file.header.version);
-    
-    console.log("Reading meshes...");
+
+    var imageUser = file.getBlocks("imageUser");
+    console.log(imageUser)
+
+    //console.log("Reading meshes...");
+    /*
     var meshes = file.getBlocks("Mesh");
     _.each(meshes, function (block) 
     {
@@ -280,45 +297,47 @@ function parseBlend(filename)
         console.log("Object:");
         console.log(obj);
     });    
+    */
 }
 
-//parseBlend("data/unitCube-000.blend");
+
 
 
 var jobs = []
-var jobnum = 0
 
 app.put('/bitblender/upload/:file', (req, res) => {
-  jobnum++;
-  var thisjobnum = Math.round(Math.random()*999999);
+  var job = {}
+  job.type = "blender render"
+  job.timestamp = Date.now()
+  job.jobnum = job.timestamp
+  job.file = req.params.file
+  job.path = 'public/bitblender/'
+  job.folder = 'jobs/'+job.jobnum;
+  job.filepath = job.folder+'/'+job.file
+  job.ownerUniqueHash = req.user.uniquehash;
 
-  var path = 'public/bitblender/'
-  var folder = 'jobs/'+thisjobnum;
-
-  mkdirp(path+folder, function (err) {
+  mkdirp(job.path + job.folder, function (err) {
       if (err) console.error(err)
       else {
-        console.log('pow!')
+        var diskfile = fs.createWriteStream(job.path+job.filepath)
+        console.log("NEW JOB! Uploading")
+        console.log(job)
 
-        var diskfile = fs.createWriteStream(path+folder+'/'+req.params.file)
-        console.log("file upload!"+req.url)
-        console.log(req.params)
+        diskfile.on('finish', () => {
+          console.error('all writes are now complete.');
+          console.log("done recieving file:" + req.params.file)
+          //DISABLED 
+          parseBlend(job.path+job.filepath);
+          res.end(JSON.stringify(job));
+        });
+
         req.on('data', function (data) {
           //console.log(data.toString())
           diskfile.write(data)
         })
         req.on('end', function (data) {
-          console.log("---- new job -----")
-          console.log("done recieving file:" + req.params.file)
+          diskfile.end()
           
-          var job = {}
-          job.jobnum = thisjobnum
-          job.file = req.params.file
-          job.filepath = folder+'/'+req.params.file
-          jobs.push(job)
-          if (globalsocket != false) { globalsocket.emit('jobs', jobs); }
-
-          res.end(job.filepath);
         })
 
       }
@@ -515,16 +534,16 @@ app.put('/api/send', (req, res) => {
 
 })
 
-/* - - - -  
+
 
 
 app.get('/admin', (req,res) => {
   req.session.hash = "a64b00e8e36fa32b4144b561749c32ac3ae22664ecaff815c7821936ad33ce21";
   res.end("done.")
 })
-*/
 
-/* - - - -  */
+
+// /* - - - -  */
 
 app.get('/account', (req, res) => {
   res.sendFile(path.join(__dirname+'/view/account.html'));  
@@ -793,6 +812,102 @@ var cpUpload = upload.fields([{ name: 'file', maxCount: 1 }, { name: 'gallery', 
 
   
 })
+
+/* MAIL */
+
+app.get("/api/mail", (req, res) => {
+  //admin check
+  if (req.session.hash == "a64b00e8e36fa32b4144b561749c32ac3ae22664ecaff815c7821936ad33ce21") {
+    db.mail.find({}, (err, dbres) => {
+      res.json(dbres)
+    })    
+  } else { res.json({"message":"no auth"})}
+
+})
+
+app.get("/api/mail/test", (req, res) => {
+ var mailentry = {"html":"Test<br><br>-- <br><div dir=\"ltr\">Rouan van der Ende | 062 933 1183 | <a href=\"mailto:rouan@8bo.org\" target=\"_blank\">rouan@8bo.org</a> | <a href=\"http://bitlab.io\" target=\"_blank\">bitlab.io</a> | BTC: 1EZ6S8YqfxzfMKCCtpzKeEJW1qMthQnCuD</div><br>\n","text":"Test\n\n-- \nRouan van der Ende | 062 933 1183 | rouan@8bo.org | bitlab.io | BTC:\n1EZ6S8YqfxzfMKCCtpzKeEJW1qMthQnCuD\n","headers":{"data":"","received":["by mail-wm0-f47.google.com with SMTP id e201so22336597wme.0 for <rouan@bitlab.io>; Tue, 26 Apr 2016 22:29:36 -0700 (PDT)","by 10.194.84.35 with HTTP; Tue, 26 Apr 2016 22:29:35 -0700 (PDT)"],"dkim-signature":"v=1; a=rsa-sha256; c=relaxed/relaxed; d=8bo-org.20150623.gappssmtp.com; s=20150623; h=mime-version:date:message-id:subject:from:to; bh=v7mnRsqaMHvqMoX6zoy4Auwbb/0xvEk11rjSfIGZlwc=; b=zWaYCnzQ8PQpwEHxymAZKYHXMbeHEMjlaV/iAz4n1UYgAnJDpVnKdtpLDJcbzlroYA eilpKvmoE0TWwhwnPlpqmY4eMT0lj/Oyoy9LswQ748zduynAgrZxqk2tZ2bZkRfi/8l9 656StcpOil4i8vX9Q5I04SpoLIXs4+lwG9Zkq39hNh8kIwLJYMIDdS5du4DSkDiA7JR8 4hx58l6LU7rslKK6oybYKuk8oOBEL83F5yY67GUlB/k8qdUenlJeU8dM1lE5pMcL3SiM nXjdnU2q02Ydjs7FLS2N0T7S+fZuLrrkafZayQG5XbgCZpBGtWk66dIDx+x/gwXsEIQm oV/Q==","x-google-dkim-signature":"v=1; a=rsa-sha256; c=relaxed/relaxed; d=1e100.net; s=20130820; h=x-gm-message-state:mime-version:date:message-id:subject:from:to; bh=v7mnRsqaMHvqMoX6zoy4Auwbb/0xvEk11rjSfIGZlwc=; b=SsSr0d6RwXNFvkjuU6V9J27uvHZbpuD313+Dztc0IAGY0SNAg3T5mZHklzAJHgmblr G/DOJMFP3MKRI0Zwpl+vL3FMq94q/KoPMb2BINSK3sUfy7/1bcKRtgzp+1TQ2fYvKVdt u3AZVSzpTfhvK21hX/aLcDw4Avgh7oxRZO1ATCjtIIYrXR/3Y/URTuDeFHBgxBeH8eaO xE3AHq9I0I0QmENdDD9AChdMydeV7N1Hi5Q+OIRjI02iMCgOH07nNmO4Ee5DEBt8iUim xxMoGZxYJpjayiO17IWBrFNKS0Tr8oOmwY2cWqthlkePRuAMSesT+l9n/BIzNf4A8PDV Mwtg==","x-gm-message-state":"AOPr4FVBlhHfM3eppxpbCEW+JW2FnGrPXU6mG6cvMfxpuCV8rI+EJO0vmXqKArc44G7TelFBWsgbLrVLvcgIYg==","mime-version":"1.0","x-received":"by 10.28.59.193 with SMTP id i184mr798747wma.73.1461734975551; Tue, 26 Apr 2016 22:29:35 -0700 (PDT)","x-originating-ip":"[105.15.126.70]","date":"Wed, 27 Apr 2016 07:29:35 +0200","message-id":"<CAH1hdNrXs+B1fwVPJfGpp2eyuVCzGS3j_kKnWBmH8Hz2M_Q4kg@mail.gmail.com>","subject":"Hi","from":"Rouan van der Ende <rouan@8bo.org>","to":"rouan@bitlab.io","content-type":"multipart/alternative; boundary=001a114a54baf94f91053170b1aa"},"subject":"Hi","messageId":"CAH1hdNrXs+B1fwVPJfGpp2eyuVCzGS3j_kKnWBmH8Hz2M_Q4kg@mail.gmail.com","priority":"normal","from":[{"address":"rouan@8bo.org","name":"Rouan van der Ende"}],"to":[{"address":"rouan@bitlab.io","name":""}],"date":"2016-04-27T05:29:35.000Z","receivedDate":"2016-04-27T05:29:36.000Z","timestamp":1461734976923};
+ db.mail.save(mailentry);
+})
+
+var smtpServer = net.createServer(function (socket) {
+
+  socket.write('220 '+config.server+' ESMTP bitlab mail server.\n')
+  var incmail = {}
+  var recievingdata = false;
+  incmail.rcpt = [];
+  incmail.message = "";
+    socket.on("data", function(data) {
+        var datastr = data.toString();
+        if (datastr.indexOf("EHLO") == 0) {
+          incmail.client = datastr.slice(5,datastr.length)
+          incmail.client = incmail.client.replace(/(\r\n|\n|\r)/gm," "); //CLEAN
+          socket.write('250 Hello '+incmail.client+', you may proceed.\n')
+        }
+
+        if (datastr.indexOf("MAIL FROM:") == 0) {
+          incmail.from = datastr.slice(datastr.indexOf("<")+1, datastr.indexOf(">"))
+          incmail.from = incmail.from.replace(/(\r\n|\n|\r)/gm," ");
+          socket.write('250 Ok\n')
+        }
+
+        if(datastr.indexOf("RCPT TO:") == 0) {
+          var rcpt = datastr.slice(datastr.indexOf("<")+1, datastr.indexOf(">"))
+          incmail.rcpt.push(rcpt);
+          socket.write('250 Ok\n')  
+        }
+
+        if(datastr.indexOf("DATA") == 0) {
+          recievingdata = true;
+          socket.write('354 End data with <CR><LF>.<CR><LF>\n');
+        }
+
+        if (recievingdata == true) { incmail.message += datastr; }
+
+        if (datastr.indexOf("\r\n.\r\n") >= 0) {
+          recievingdata = false;
+          socket.write('250 Ok: queued as 12345\n') 
+            
+
+            var mailparser = new MailParser();
+            mailparser.on("headers", function(headers){
+              //console.log(headers.received);
+            });
+            mailparser.on("end", function(mail){
+              mail.timestamp = Date.now()
+              db.mail.save(mail, (err, mailsaved) => {
+                console.log("email saved.")
+              })
+              //db.push(mail);
+              //console.log(mail);  // FINAL PARSED MAIL
+            });
+          //
+          mailparser.write(incmail.message);
+          mailparser.end();
+          //console.log('recieved an email!')
+        }
+
+    if (datastr.indexOf("QUIT") == 0) {
+          socket.write('221 Bye\n') 
+          socket.end();
+
+        }
+
+    });
+});
+
+smtpServer.listen(25, config.server);
+
+app.get('/mail', (req, res) => {
+  res.sendFile(path.join(__dirname+'/view/mail.html'));  
+  /*db.mail.find({}, (err, dbmail) => {
+    res.json(dbmail);  
+  });*/
+  
+  
+})
+
+/* END MAIL */
 
 app.use('/newgame' ,(req, res) => {
   var newGame = {}

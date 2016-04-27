@@ -27,6 +27,7 @@
     "cookie-parser": "^1.4.1",
     "cookie-session": "^2.0.0-alpha.1",
     "express": "^4.13.4",
+    "mailparser": "^0.5.3",
     "mkdirp": "^0.5.1",
     "mongojs": "^2.3.0",
     "multer": "^1.1.0",

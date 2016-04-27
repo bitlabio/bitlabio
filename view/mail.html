@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>bitlab mail</title>
+  <meta name="description" content="diy mailbox">
+  <meta name="author" content="Rouan van der Ende">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="/css/normalize.css">
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/mail.css">
+
+  <!-- Javascript
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<script src="/js/jquery.min.js"></script>
+	<script src="/js/socket.io.js"></script>
+	
+	<link rel="stylesheet" href="/js/styles/default.css">
+	<script src="/js/moment.min.js"></script>
+	
+	<script src="/js/bitlab_main.js"></script>
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
+
+
+<script type="text/javascript">
+
+var state = {}
+	
+var renderUser = function() {
+	
+}
+
+var renderMail = function() {
+	for (var m in state.mail) {
+		console.log(state.mail[m])
+		$("#mail_inbox").append(state.mail[m].from[0].address+"<br>")
+		$("#mail_inbox").append(state.mail[m].subject+"<br>")
+		$("#mail_inbox").append(state.mail[m].date+"<br>")
+		$("#mail_inbox").append(state.mail[m].text+"<br>")
+		$("#mail_inbox").append("<hr>")
+	}
+}
+
+$(document).ready( function () {
+	
+	getJSON("/api/user", (json) => { state.user = json; renderUser();});
+	getJSON("/api/mail", (json) => { state.mail = json; renderMail(); });
+
+})
+
+</script>
+
+
+
+</head>
+
+<body>
+
+<div id="mail_inbox"> </div>
+<div id="mail_view"> </div>
+
+
+
+</body>
+
+
+</html>

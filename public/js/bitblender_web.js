@@ -64,7 +64,7 @@ var bitcoinUpdateBalance = function(walletaddress) {
     });
 }
 
-setInterval(bitcoinUpdateBalance, 1000 * 60 * 10); // update every 10 minutes.
+
 
 
 
@@ -92,10 +92,41 @@ setInterval(render, 1000);
 
 /******* FILE UPLOADER **///
 
+var step2 = function(job) {
+    $("#tabstep1").removeClass("tabactive")
+    $("#tabstep1").addClass("tabinactive")
+    $("#windowstep1").hide();
+    $("#tabstep2").removeClass("tabinactive")
+    $("#tabstep2").addClass("tabactive")
+    $("#windowstep2").show();
 
+    //$("#windowstep2").append(job+"<br>")
+
+    //var setupform = JSON.stringify(job)+"<br>"
+
+    var setupform = "JOB: "+job.file+" (#"+job.jobnum+") <br>"
+    setupform += `Render from frame <input type="text" value="1"> to <input type="text" value="10"> <button>render</button>`
+    setupform += `<hr>`
+
+    $("#windowstep2").append(setupform)
+
+}
+
+var step3 = function() {
+    $("#tabstep1").removeClass("tabactive")
+    $("#tabstep1").addClass("tabinactive")
+    $("#windowstep1").hide();    
+    $("#tabstep2").removeClass("tabactive")
+    $("#tabstep2").addClass("tabinactive")
+    $("#windowstep2").hide();
+    $("#tabstep3").removeClass("tabinactive")
+    $("#tabstep3").addClass("tabactive")
+    $("#windowstep3").show();
+}
 
 
 $(document).ready( function () {
+    
 
     updateUser();
 
@@ -145,6 +176,9 @@ $(document).ready( function () {
                 // progress.className = (xhr.status == 200 ? "success" : "failure");
                 if (xhr.status == 200) {
                     $(li).html('<a target="_blank" href="' + xhr.responseText + '">' + xhr.responseText + '</a>');
+                    var serverResponse = JSON.parse(xhr.responseText)
+                    step2(serverResponse);
+
                 } else {
                     $(li).html('<span>Error (' + xhr.status + ') during upload of file ' + file.name + '</span>');
                 }
@@ -157,10 +191,11 @@ $(document).ready( function () {
 
                 files.push(URI(xhr.responseText.replace("\n", "")).path());
 
+                /*
                 $(".download-zip").attr("href", URI("(" + files.join(",") + ").zip").absoluteTo(location.href).toString());
                 $(".download-tar").attr("href", URI("(" + files.join(",") + ").tar.gz").absoluteTo(location.href).toString());
-
                 $(".all-files").addClass('show');
+                */
             }
         };
 
@@ -176,6 +211,7 @@ $(document).ready( function () {
     $(document).bind("dragenter", function(event) {
         event.preventDefault();
     }).bind("dragover", function(event) {
+        console.log("dragOver")
         event.preventDefault();
         // show drop indicator
         $('#terminal').addClass('dragged');

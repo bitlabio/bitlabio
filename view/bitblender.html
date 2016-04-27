@@ -83,6 +83,44 @@ $("#closeButtonInfo").click( function() {
 	
 }
 
+.tab { 
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	padding-top: 20px;
+	width:33.3333%; 
+	height: 70px; 
+	float:left; 
+	text-align: center;
+	box-sizing: border-box; 
+	border: 1px solid rgb(20,20,20)
+	
+ }
+
+ ul.queue { list-style: none; }
+
+.tabactive {
+	color: rgb(175,175,175);
+	background: rgb(255,255,255);
+}
+
+.tabinactive {
+	background: rgb(25,25,25);
+	color: rgb(100,100,100);
+}
+
+.tabwindow {
+	color: rgb(50,50,50);
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
+	box-sizing: border-box; 
+	border-left: 1px solid rgb(20,20,20);	
+	border-right: 1px solid rgb(20,20,20);		
+	border-bottom: 1px solid rgb(20,20,20);			
+}
+
+.tabwindow a { color: #ff7b11; }
+.tabwindow a:hover { color: #ff9c33; text-decoration: underline; }
+
 .spot { color: #3dd7ab; }
 
 .orange {color: #ff7b11;}
@@ -117,7 +155,7 @@ hr {
 	      		
 	      		<div class="three columns" >
 					<div class="orbitron" style="color:rgb(255,255,255); letter-spacing: 0.025em; font-size: 22px; position:relative; top: 10px;" >
-						bit<span class="varela" style="font-size: 18px;position: relative; left: -1px;letter-spacing: -0.05em;  ">BLENDER</span> <span class="varela" style="font-size: 8px;  color: #3dd7ab; top: -17px; padding: 0px; text-transform: lowercase; margin: 0; position: relative; left: -32px; letter-spacing: -0.05em;">stealth beta v0.0.2</span>
+						bit<span class="varela" style="font-size: 18px;position: relative; left: -1px;letter-spacing: -0.05em;  ">BLENDER</span> <span class="orange varela" style="font-size: 10px;  top: -17px; padding: 0px; text-transform: lowercase; margin: 0; position: relative; left: -32px; letter-spacing: -0.05em;">stealth beta v0.0.2</span>
 					</div>
 	      		</div>
 
@@ -138,7 +176,7 @@ hr {
 			<!-- -->
 
 			<div class="row">
-				<div class="twelve columns white" style="text-align:center; margin-top: 120px; margin-bottom: 100px;">
+				<div class="twelve columns white" style="text-align:center; margin-top: 70px; margin-bottom: 20px;">
 				<h3>Fast &amp; Easy distributed <a class="orange" href="https://www.blender.org/">blender</a> rendering for <a class="orange" href="https://www.youtube.com/watch?v=Gc2en3nHxA4">bitcoin</a>.</h3>
 				</div>
 			</div>
@@ -193,33 +231,50 @@ hr {
 
 
 
-		<div class="row gray" style="margin-top: 40px;">
+		<div class="row gray" style="margin-top: 20px;z-index: -10; position: relative; top: 10px;">
 
-	      <div class="twelve columns" style="text-align:left;">
-	      	<div class="pad darkbg serviceBlock" >
-	      		<div class="varela caps title white" style="line-height: 1em;text-align: center;">SUBMIT NEW RENDER JOB</div>
+		 	      <div class="twelve columns">
+		 	      	<div id="tabstep1" class="tab orbitron tabactive">
+		 	      		STEP 1 UPLOAD BLEND
+		 	      	</div>
+		 	      
+		 	      	<div id="tabstep2" class="tab orbitron tabinactive" >
+		 	      		STEP 2 PAYMENT
+		 	      	</div>
+
+		 	      	<div id="tabstep3" class="tab orbitron tabinactive" >
+		 	      		STEP 3 DOWNLOAD FRAMES
+		 	      	</div>
+		 	      </div>
+
+		 	
+		</div>
+
+		<div class="row gray" > 
+	      <div class="twelve columns" style="text-align:left; z-index: 10;">
+	      	<div class="pad tabwindow" style="background: rgb(255,255,255); ">
 	      		
-	      		<div style="font-size: 12px;  margin-top:55px; min-height: 80px;text-align: left;">
-	      			
-	      			Drag your files here, or <a class="browse" href="#"> click to browse.</a>
+	      		<div id="windowstep1" style="font-size: 18px;  margin-top:55px; min-height: 80px;text-align: center;">
+	      			Drag your .blend here, or <a class="browse" href="#"> click to browse.</a>
+	      			<p style="font-size: 10px;">Best practice is in blender to go to File > External Data > Pack All into .blend<br>
+	      			When saving your .blend out of blender please uncheck "Compress" on the left options panel. Compression will be accepted in the near future.
+	      			</p>
 	      			<input type="file" multiple="multiple" style='display: none;' />
                     <ul class='queue'>
                         <li>
                         </li>
                     </ul>
-                    <div class='all-files'>
-                        <br>
-                        <div>
-                            <span class="code-title"># Download all your files</span>
-                            <br/>
-                            <br/>
-                            <a class="download-zip btn-cta" href="#">zip</a> <a class="download-tar btn-cta" href="#">tar.gz</a>
-                        </div>
-                    </div>
-
-
 
 	      		</div>
+
+	      		<div id="windowstep2" style="font-size: 18px;  margin-top:55px; min-height: 80px;text-align: center; display: none;">
+	      			
+	      		</div>
+
+	      		<div id="windowstep3" style="font-size: 18px;  margin-top:55px; min-height: 80px;text-align: center; display: none;">
+	      			STEP3
+	      		</div>
+
 	      	</div>
 		  </div>	
 		</div>
